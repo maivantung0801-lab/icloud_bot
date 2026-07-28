@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# ============================================================
+# SIÊU TỐC iCLOUD BOT - by Mai Văn Tùng
+# Dành cho Render (chạy 24/7)
+# ============================================================
+
 import telebot
 import json
 import time
@@ -9,16 +14,11 @@ import os
 TOKEN = "8895985240:AAGrVu2Ih6MUnMxYXQofi7iI7FYD5_ukrPQ"
 ADMIN_ID = "8695176044"
 bot = telebot.TeleBot(TOKEN)
-
-# ===== XÓA WEBHOOK CŨ =====
-try:
-    bot.remove_webhook()
-    print("✅ Đã xóa webhook cũ thành công!")
-except Exception as e:
-    print(f"⚠️ Không thể xóa webhook: {e}")
-# ===========================
 DATA_FILE = os.path.join(os.path.dirname(__file__), "icloud_requests.json")
 
+# ============================================================
+# BẢNG GÓI VAY
+# ============================================================
 LOAN_PACKAGES = [
     {"stt": 2, "ten": "11Pro", "goi": "2M", "tien_ngay": "100x32", "thanh_tien": "3.200"},
     {"stt": 3, "ten": "11Prm + 12T", "goi": "3M", "tien_ngay": "110x40", "thanh_tien": "4.400"},
@@ -32,6 +32,9 @@ LOAN_PACKAGES = [
     {"stt": 11, "ten": "17Prm Vna", "goi": "12M", "tien_ngay": "420x40 / 350x50", "thanh_tien": "16.800 / 17.500"},
 ]
 
+# ============================================================
+# BẢNG GIÁ PHÁ iCLOUD (TĂNG 30%)
+# ============================================================
 UNLOCK_PRICES = [
     {"stt": 1, "ten": "iPhone X, XS, XR, XSMax", "gia": 910000, "gia_text": "910.000đ"},
     {"stt": 2, "ten": "iPhone 11, 12, 11Pro, 11ProMax", "gia": 1040000, "gia_text": "1.040.000đ"},
@@ -45,20 +48,30 @@ UNLOCK_PRICES = [
     {"stt": 10, "ten": "Macbook (các loại)", "gia": 1170000, "gia_text": "1.170.000 - 1.950.000đ"},
 ]
 
+# ============================================================
+# THÔNG TIN LIÊN HỆ & NGÂN HÀNG
+# ============================================================
 CONTACT_INFO = """
 📞 **LIÊN HỆ NGAY ĐỂ ĐƯỢC HỖ TRỢ**
+
 👤 **Zalo:** 0398564507
 ✈️ **Telegram:** @tientyicloud
+
+📌 *Vui lòng liên hệ để được tư vấn chi tiết!*
 """
 
 BANK_INFO = """
 🏦 **THÔNG TIN CHUYỂN KHOẢN**
+
 💰 **Ngân hàng:** MB Bank
 📌 **Số tài khoản:** 9989123989
 👤 **Chủ tài khoản:** Mai Văn Tùng
 💬 **Nội dung:** Mã yêu cầu + Tên dịch vụ
 """
 
+# ============================================================
+# HÀM LƯU DỮ LIỆU
+# ============================================================
 def save_request(user_id, username, service, info):
     try:
         with open(DATA_FILE, "r") as f:
@@ -86,6 +99,9 @@ def send_to_admin(msg):
     except:
         pass
 
+# ============================================================
+# TẠO MENU
+# ============================================================
 def main_menu():
     keyboard = telebot.types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     buttons = ["💰 Vay tiền qua iCloud", "📱 Check IMEI", "🔓 Bypass iCloud", "🔒 Chặn khóa iCloud", "🗑️ Phá iCloud", "📋 Xem trạng thái", "👤 Hướng dẫn", "📞 Liên hệ hỗ trợ"]
@@ -143,6 +159,9 @@ def create_imei_result_keyboard():
     keyboard.add(telebot.types.InlineKeyboardButton("🔙 Quay lại menu", callback_data="back_menu"))
     return keyboard
 
+# ============================================================
+# LỆNH /START
+# ============================================================
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.reply_to(message, 
@@ -151,6 +170,9 @@ def start(message):
         "📌 **Vui lòng chọn dịch vụ bạn cần bên dưới:**",
         reply_markup=main_menu(), parse_mode="Markdown")
 
+# ============================================================
+# XỬ LÝ TIN NHẮN
+# ============================================================
 @bot.message_handler(func=lambda m: True)
 def handle_message(message):
     text = message.text
@@ -225,6 +247,9 @@ def handle_message(message):
     else:
         bot.reply_to(message, "❌ Vui lòng chọn dịch vụ từ menu.")
 
+# ============================================================
+# XỬ LÝ CHECK IMEI
+# ============================================================
 def process_imei(message):
     imei = message.text.strip()
     if not imei.isdigit() or len(imei) != 15:
@@ -242,6 +267,9 @@ def process_imei(message):
         reply_markup=create_imei_result_keyboard(), parse_mode="Markdown")
     send_to_admin(f"🔍 CHECK IMEI từ {message.from_user.first_name}:\nIMEI: {imei}\n📌 Mã: {req_id}")
 
+# ============================================================
+# XỬ LÝ CALLBACK
+# ============================================================
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback(call):
     bot.answer_callback_query(call.id)
@@ -249,6 +277,7 @@ def handle_callback(call):
     username = user.username or user.first_name
     user_id = user.id
 
+    # === VAY TIỀN ===
     if call.data.startswith("loan_"):
         stt = int(call.data.split("_")[1])
         pkg = next((p for p in LOAN_PACKAGES if p["stt"] == stt), None)
@@ -271,6 +300,7 @@ def handle_callback(call):
             )
             send_to_admin(f"🔔 VAY TIỀN từ {username}:\n{info}\n📌 Mã: {req_id}")
 
+    # === PHÁ iCLOUD ===
     elif call.data.startswith("unlock_"):
         stt = int(call.data.split("_")[1])
         pkg = next((p for p in UNLOCK_PRICES if p["stt"] == stt), None)
@@ -294,6 +324,7 @@ def handle_callback(call):
             )
             send_to_admin(f"🔔 PHÁ iCLOUD từ {username}:\n{info}\n📌 Mã: {req_id}")
 
+    # === BYPASS ===
     elif call.data == "bypass_old":
         bot.edit_message_text(
             "📱 **BYPASS 11ProMax ĐỔ XUỐNG**\n\n"
@@ -358,6 +389,7 @@ def handle_callback(call):
             parse_mode="Markdown"
         )
 
+    # === THANH TOÁN ===
     elif call.data.startswith("pay_"):
         parts = call.data.split("_")
         req_id = parts[2]
@@ -387,6 +419,7 @@ def handle_callback(call):
         )
         bot.register_next_step_handler_by_chat_id(call.message.chat.id, process_receipt, req_id)
 
+    # === LIÊN HỆ / MENU ===
     elif call.data == "contact_imei":
         bot.edit_message_text(
             CONTACT_INFO,
@@ -423,6 +456,9 @@ def handle_callback(call):
             parse_mode="Markdown"
         )
 
+# ============================================================
+# XỬ LÝ ẢNH BIÊN LAI
+# ============================================================
 def process_receipt(message, req_id):
     if message.photo:
         file_id = message.photo[-1].file_id
@@ -467,15 +503,27 @@ def update_request_status(req_id, status):
     except:
         return False
 
+# ============================================================
+# CHẠY BOT (ĐÃ XÓA WEBHOOK VÀ SKIP_PENDING)
+# ============================================================
 if __name__ == "__main__":
     print("🚀 SIÊU TỐC iCLOUD BOT đang chạy...")
     print(f"📱 Bot ID: {TOKEN.split(':')[0]}")
     print(f"👤 Admin ID: {ADMIN_ID}")
     print(f"📋 Đã tải {len(UNLOCK_PRICES)} gói phá iCloud")
+
+    # Xóa webhook cũ nếu có
+    try:
+        bot.delete_webhook()
+        print("✅ Đã xóa webhook cũ")
+    except Exception as e:
+        print(f"⚠️ Không thể xóa webhook: {e}")
+
+    # Polling với skip_pending để tránh lỗi 409
     while True:
         try:
-            bot.polling(non_stop=True, timeout=60, long_polling_timeout=30)
+            bot.polling(non_stop=True, skip_pending=True, timeout=30, long_polling_timeout=20)
         except Exception as e:
-            print(f"⚠️ Lỗi: {e}")
+            print(f"⚠️ Lỗi polling: {e}")
             print("🔄 Thử lại sau 5 giây...")
             time.sleep(5)
