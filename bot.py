@@ -1,30 +1,23 @@
 #!/usr/bin/env python3
 # ============================================================
 # SIÊU TỐC iCLOUD BOT - by Mai Văn Tùng
-# Dành cho Render (chạy 24/7) - ĐÃ SỬA LỖI 409
+# WEBHOOK VERSION - Chạy ổn định trên Render
 # ============================================================
 
-import telebot
+import os
 import json
 import time
-import random
 from datetime import datetime
-import os
-import threading
+from flask import Flask, request, jsonify
+import telebot
+from telebot.types import Update
 
 TOKEN = "8895985240:AAGrVu2Ih6MUnMxYXQofi7iI7FYD5_ukrPQ"
 ADMIN_ID = "8695176044"
 bot = telebot.TeleBot(TOKEN)
-DATA_FILE = os.path.join(os.path.dirname(__file__), "icloud_requests.json")
+app = Flask(__name__)
 
-# ============================================================
-# XÓA WEBHOOK CŨ VÀ BỎ QUA UPDATE ĐANG CHỜ
-# ============================================================
-try:
-    bot.delete_webhook(drop_pending_updates=True)
-    print("✅ Đã xóa webhook cũ và bỏ qua các update đang chờ")
-except Exception as e:
-    print(f"⚠️ Không thể xóa webhook: {e}")
+DATA_FILE = os.path.join(os.path.dirname(__file__), "icloud_requests.json")
 
 # ============================================================
 # BẢNG GÓI VAY
@@ -170,7 +163,7 @@ def create_imei_result_keyboard():
     return keyboard
 
 # ============================================================
-# LỆNH /START
+# HANDLER LỆNH /START
 # ============================================================
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -181,7 +174,7 @@ def start(message):
         reply_markup=main_menu(), parse_mode="Markdown")
 
 # ============================================================
-# XỬ LÝ TIN NHẮN
+# HANDLER TIN NHẮN
 # ============================================================
 @bot.message_handler(func=lambda m: True)
 def handle_message(message):
@@ -514,19 +507,43 @@ def update_request_status(req_id, status):
         return False
 
 # ============================================================
-# CHẠY BOT (VÒNG LẶP TỰ ĐỘNG THỬ LẠI)
+# WEBHOOK ENDPOINT
+# ============================================================
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    try:
+        json_str = request.stream.read().decode('utf-8')
+        update = Update.de_json(json_str)
+        bot.process_new_updates([update])
+        return 'OK', 200
+    except Exception as e:
+        print(f"⚠️ Webhook error: {e}")
+        return 'OK', 200
+
+@app.route('/healthcheck', methods=['GET'])
+def healthcheck():
+    return jsonify({"status": "ok", "bot": "running"}), 200
+
+# ============================================================
+# CHẠY BOT
 # ============================================================
 if __name__ == "__main__":
-    print("🚀 SIÊU TỐC iCLOUD BOT đang chạy...")
-    print(f"📱 Bot ID: {TOKEN.split(':')[0]}")
-    print(f"👤 Admin ID: {ADMIN_ID}")
-    print(f"📋 Đã tải {len(UNLOCK_PRICES)} gói phá iCloud")
+    # Xóa webhook cũ
+    try:
+        bot.delete_webhook()
+        print("✅ Đã xóa webhook cũ")
+    except Exception as e:
+        print(f"⚠️ Không thể xóa webhook: {e}")
 
-    # Chạy polling trong vòng lặp với cơ chế thử lại
-    while True:
-        try:
-            bot.polling(non_stop=True, skip_pending=True, timeout=30, long_polling_timeout=20)
-        except Exception as e:
-            print(f"⚠️ Lỗi polling: {e}")
-            print("🔄 Thử lại sau 5 giây...")
-            time.sleep(5)
+    # Đặt webhook mới
+    webhook_url = "https://icloud-bot.onrender.com/webhook"
+    try:
+        bot.set_webhook(url=webhook_url)
+        print(f"✅ Webhook đã được đặt: {webhook_url}")
+    except Exception as e:
+        print(f"⚠️ Không thể đặt webhook: {e}")
+
+    # Chạy Flask app
+    port = int(os.environ.get('PORT', 8080))
+    print(f"🚀 SIÊU TỐC iCLOUD BOT đang chạy trên port {port} với webhook...")
+    app.run(host='0.0.0.0', port=port)
