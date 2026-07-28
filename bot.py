@@ -9,7 +9,18 @@ import os
 TOKEN = "8895985240:AAGrVu2Ih6MUnMxYXQofi7iI7FYD5_ukrPQ"
 ADMIN_ID = "8695176044"
 bot = telebot.TeleBot(TOKEN)
-DATA_FILE = os.path.join(os.path.dirname(__file__), "icloud_requests.json")
+DATA_FILE =TOKEN = "8895985240:AAGrVu2Ih6MUnMxYXQofi7iI7FYD5_ukrPQ"
+ADMIN_ID = "8695176044"
+bot = telebot.TeleBot(TOKEN)
+
+# ===== XÓA WEBHOOK CŨ =====
+try:
+    bot.remove_webhook()
+    print("✅ Đã xóa webhook cũ thành công!")
+except Exception as e:
+    print(f"⚠️ Không thể xóa webhook: {e}")
+# =========================== 
+os.path.join(os.path.dirname(__file__), "icloud_requests.json")
 
 LOAN_PACKAGES = [
     {"stt": 2, "ten": "11Pro", "goi": "2M", "tien_ngay": "100x32", "thanh_tien": "3.200"},
