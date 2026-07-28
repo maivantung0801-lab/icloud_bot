@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ============================================================
 # SIÊU TỐC iCLOUD BOT - by Mai Văn Tùng
-# Dành cho Render (chạy 24/7)
+# Dành cho Render (chạy 24/7) - ĐÃ SỬA LỖI 409
 # ============================================================
 
 import telebot
@@ -10,11 +10,21 @@ import time
 import random
 from datetime import datetime
 import os
+import threading
 
 TOKEN = "8895985240:AAGrVu2Ih6MUnMxYXQofi7iI7FYD5_ukrPQ"
 ADMIN_ID = "8695176044"
 bot = telebot.TeleBot(TOKEN)
 DATA_FILE = os.path.join(os.path.dirname(__file__), "icloud_requests.json")
+
+# ============================================================
+# XÓA WEBHOOK CŨ VÀ BỎ QUA UPDATE ĐANG CHỜ
+# ============================================================
+try:
+    bot.delete_webhook(drop_pending_updates=True)
+    print("✅ Đã xóa webhook cũ và bỏ qua các update đang chờ")
+except Exception as e:
+    print(f"⚠️ Không thể xóa webhook: {e}")
 
 # ============================================================
 # BẢNG GÓI VAY
@@ -504,7 +514,7 @@ def update_request_status(req_id, status):
         return False
 
 # ============================================================
-# CHẠY BOT (ĐÃ XÓA WEBHOOK VÀ SKIP_PENDING)
+# CHẠY BOT (VÒNG LẶP TỰ ĐỘNG THỬ LẠI)
 # ============================================================
 if __name__ == "__main__":
     print("🚀 SIÊU TỐC iCLOUD BOT đang chạy...")
@@ -512,14 +522,7 @@ if __name__ == "__main__":
     print(f"👤 Admin ID: {ADMIN_ID}")
     print(f"📋 Đã tải {len(UNLOCK_PRICES)} gói phá iCloud")
 
-    # Xóa webhook cũ nếu có
-    try:
-        bot.delete_webhook()
-        print("✅ Đã xóa webhook cũ")
-    except Exception as e:
-        print(f"⚠️ Không thể xóa webhook: {e}")
-
-    # Polling với skip_pending để tránh lỗi 409
+    # Chạy polling trong vòng lặp với cơ chế thử lại
     while True:
         try:
             bot.polling(non_stop=True, skip_pending=True, timeout=30, long_polling_timeout=20)
